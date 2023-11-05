@@ -15,7 +15,7 @@ from framework import get_model, get_trainer
 from framework.models.gcn import GCN
 from framework.training_args import parse_args
 from framework.utils import *
-from train_mi import MLPAttacker
+# from train_mi import MLPAttacker
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
