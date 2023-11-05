@@ -25,6 +25,7 @@ nvidia-cusolver-cu11==11.4.0.1
 nvidia-cusparse-cu11==11.7.4.91
 nvidia-nccl-cu11==2.14.3
 nvidia-nvtx-cu11==11.7.91
+ogb
 pandas==2.0.3
 pathtools==0.1.2
 protobuf==4.24.0
