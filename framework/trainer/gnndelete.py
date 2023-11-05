@@ -161,7 +161,7 @@ class GNNDeleteTrainer(Trainer):
         # All node paris in S_Df without Df
         ## S_Df 1 hop all pair mask
         sdf1_all_pair_mask = torch.zeros(data.num_nodes, data.num_nodes, dtype=torch.bool)
-        idx = torch.combinations(torch.arange(data.num_nodes)[data.sdf_node_1hop_mask], with_replacement=True).t()
+        idx = torch.combinations(torch.arange(data.num_nodes)[data.sdf_node_1hop_mask.cpu()], with_replacement=True).t()
         sdf1_all_pair_mask[idx[0], idx[1]] = True
         sdf1_all_pair_mask[idx[1], idx[0]] = True
 
@@ -173,7 +173,7 @@ class GNNDeleteTrainer(Trainer):
 
         ## S_Df 2 hop all pair mask
         sdf2_all_pair_mask = torch.zeros(data.num_nodes, data.num_nodes, dtype=torch.bool)
-        idx = torch.combinations(torch.arange(data.num_nodes)[data.sdf_node_2hop_mask], with_replacement=True).t()
+        idx = torch.combinations(torch.arange(data.num_nodes)[data.sdf_node_2hop_mask.cpu()], with_replacement=True).t()
         sdf2_all_pair_mask[idx[0], idx[1]] = True
         sdf2_all_pair_mask[idx[1], idx[0]] = True
 
@@ -208,7 +208,7 @@ class GNNDeleteTrainer(Trainer):
 
         loss_fct = nn.MSELoss()
 
-        for epoch in trange(args.epochs, desc='Unlerning'):
+        for epoch in trange(args.epochs, desc='Unlearning'):
             model.train()
 
             start_time = time.time()
@@ -335,7 +335,7 @@ class GNNDeleteTrainer(Trainer):
         loader = GraphSAINTRandomWalkSampler(
             data, batch_size=args.batch_size, walk_length=2, num_steps=args.num_steps,
         )
-        for epoch in trange(args.epochs, desc='Unlerning'):
+        for epoch in trange(args.epochs, desc='Unlearning'):
             model.train()
 
             # print('current deletion weight', model.deletion1.deletion_weight.sum(), model.deletion2.deletion_weight.sum())
