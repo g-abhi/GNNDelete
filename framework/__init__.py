@@ -7,8 +7,8 @@ from .trainer.gradient_ascent import GradientAscentTrainer, KGGradientAscentTrai
 from .trainer.descent_to_delete import DtdTrainer
 from .trainer.approx_retrain import ApproxTrainer
 from .trainer.graph_eraser import GraphEraserTrainer
-from .trainer.graph_editor import GraphEditorTrainer
-from .trainer.member_infer import MIAttackTrainer, MIAttackTrainerNode
+# from .trainer.graph_editor import GraphEditorTrainer
+# from .trainer.member_infer import MIAttackTrainer, MIAttackTrainerNode
 
 
 trainer_mapping = {
@@ -24,11 +24,11 @@ trainer_mapping = {
     'gnndelete_nodeemb': GNNDeleteNodeembTrainer,
     'gnndelete_cosine': GNNDeleteTrainer,
     'graph_eraser': GraphEraserTrainer,
-    'graph_editor': GraphEditorTrainer,
-    'member_infer_all': MIAttackTrainer,
-    'member_infer_sub': MIAttackTrainer,
-    'member_infer_all_node': MIAttackTrainerNode,
-    'member_infer_sub_node': MIAttackTrainerNode,
+    # 'graph_editor': GraphEditorTrainer,
+    # 'member_infer_all': MIAttackTrainer,
+    # 'member_infer_sub': MIAttackTrainer,
+    # 'member_infer_all_node': MIAttackTrainerNode,
+    # 'member_infer_sub_node': MIAttackTrainerNode,
 }
 
 kg_trainer_mapping = {
@@ -43,8 +43,8 @@ kg_trainer_mapping = {
     'gnndelete_cosine': GNNDeleteTrainer,
     'gnndelete_nodeemb': KGGNNDeleteNodeembTrainer,
     'graph_eraser': GraphEraserTrainer,
-    'member_infer_all': MIAttackTrainer,
-    'member_infer_sub': MIAttackTrainer,
+    # 'member_infer_all': MIAttackTrainer,
+    # 'member_infer_sub': MIAttackTrainer,
 }
 
 
