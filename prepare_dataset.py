@@ -17,7 +17,7 @@ from framework.utils import *
 data_dir = './data'
 df_size = [i / 100 for i in range(10)] + [i / 10 for i in range(10)] + [i for i in range(10)]       # Df_size in percentage
 seeds = [42, 21, 13, 87, 100]
-graph_datasets = ['Cora', 'PubMed', 'DBLP', 'CS', 'ogbl-citation2', 'ogbl-collab'][:1]
+graph_datasets = ['FacebookArtists','Cora', 'PubMed', 'DBLP', 'CS', 'ogbl-citation2', 'ogbl-collab'][:2]
 kg_datasets = ['FB15k-237', 'WordNet18', 'WordNet18RR', 'ogbl-biokg'][-1:]
 os.makedirs(data_dir, exist_ok=True)
 
@@ -146,6 +146,10 @@ def process_graph():
             dataset = Flickr(os.path.join(data_dir, d), transform=T.NormalizeFeatures())
         elif 'ogbl' in d:
             dataset = PygLinkPropPredDataset(root=os.path.join(data_dir, d), name=d)
+        elif 'FacebookArtists' in d:
+            df = pd.read_csv('./facebook_clean_data/artist.edges').to_numpy()
+            df = np.swapaxes(df,0,1)
+            dataset = [Data(edge_index=df)]
         else:
             raise NotImplementedError
 
@@ -263,140 +267,140 @@ def process_graph():
                 os.path.join(data_dir, d, f'df_{s}.pt')
             )
 
-def process_kg():
-    for d in kg_datasets:
+# def process_kg():
+#     for d in kg_datasets:
 
-        # Create the dataset to calculate node degrees
-        if d in ['FB15k-237']:
-            dataset = RelLinkPredDataset(os.path.join(data_dir, d), d, transform=T.NormalizeFeatures())
-            data = dataset[0]
-            data.x = torch.arange(data.num_nodes)
-            edge_index = torch.cat([data.train_edge_index, data.valid_edge_index, data.test_edge_index], dim=1)
-            edge_type = torch.cat([data.train_edge_type, data.valid_edge_type, data.test_edge_type])
-            data = Data(edge_index=edge_index, edge_type=edge_type)
+#         # Create the dataset to calculate node degrees
+#         if d in ['FB15k-237']:
+#             dataset = RelLinkPredDataset(os.path.join(data_dir, d), d, transform=T.NormalizeFeatures())
+#             data = dataset[0]
+#             data.x = torch.arange(data.num_nodes)
+#             edge_index = torch.cat([data.train_edge_index, data.valid_edge_index, data.test_edge_index], dim=1)
+#             edge_type = torch.cat([data.train_edge_type, data.valid_edge_type, data.test_edge_type])
+#             data = Data(edge_index=edge_index, edge_type=edge_type)
 
-        elif d in ['WordNet18RR']:
-            dataset = WordNet18RR(os.path.join(data_dir, d), transform=T.NormalizeFeatures())
-            data = dataset[0]
-            data.x = torch.arange(data.num_nodes)
-            data.train_mask = data.val_mask = data.test_mask = None
+#         elif d in ['WordNet18RR']:
+#             dataset = WordNet18RR(os.path.join(data_dir, d), transform=T.NormalizeFeatures())
+#             data = dataset[0]
+#             data.x = torch.arange(data.num_nodes)
+#             data.train_mask = data.val_mask = data.test_mask = None
 
-        elif d in ['WordNet18']:
-            dataset = WordNet18(os.path.join(data_dir, d), transform=T.NormalizeFeatures())
-            data = dataset[0]
-            data.x = torch.arange(data.num_nodes)
+#         elif d in ['WordNet18']:
+#             dataset = WordNet18(os.path.join(data_dir, d), transform=T.NormalizeFeatures())
+#             data = dataset[0]
+#             data.x = torch.arange(data.num_nodes)
 
-            # Use original split
-            data.train_pos_edge_index = data.edge_index[:, data.train_mask]
-            data.train_edge_type = data.edge_type[data.train_mask]
+#             # Use original split
+#             data.train_pos_edge_index = data.edge_index[:, data.train_mask]
+#             data.train_edge_type = data.edge_type[data.train_mask]
 
-            data.val_pos_edge_index = data.edge_index[:, data.val_mask]
-            data.val_edge_type = data.edge_type[data.val_mask]
-            data.val_neg_edge_index = negative_sampling_kg(data.val_pos_edge_index, data.val_edge_type)
+#             data.val_pos_edge_index = data.edge_index[:, data.val_mask]
+#             data.val_edge_type = data.edge_type[data.val_mask]
+#             data.val_neg_edge_index = negative_sampling_kg(data.val_pos_edge_index, data.val_edge_type)
 
-            data.test_pos_edge_index = data.edge_index[:, data.test_mask]
-            data.test_edge_type = data.edge_type[data.test_mask]
-            data.test_neg_edge_index = negative_sampling_kg(data.test_pos_edge_index, data.test_edge_type)
+#             data.test_pos_edge_index = data.edge_index[:, data.test_mask]
+#             data.test_edge_type = data.edge_type[data.test_mask]
+#             data.test_neg_edge_index = negative_sampling_kg(data.test_pos_edge_index, data.test_edge_type)
 
-        elif 'ogbl' in d:
-            dataset = PygLinkPropPredDataset(root=os.path.join(data_dir, d), name=d)
+#         elif 'ogbl' in d:
+#             dataset = PygLinkPropPredDataset(root=os.path.join(data_dir, d), name=d)
 
-            split_edge = dataset.get_edge_split()
-            train_edge, valid_edge, test_edge = split_edge["train"], split_edge["valid"], split_edge["test"]
-            entity_dict = dict()
-            cur_idx = 0
-            for key in dataset[0]['num_nodes_dict']:
-                entity_dict[key] = (cur_idx, cur_idx + dataset[0]['num_nodes_dict'][key])
-                cur_idx += dataset[0]['num_nodes_dict'][key]
-            nentity = sum(dataset[0]['num_nodes_dict'].values())
+#             split_edge = dataset.get_edge_split()
+#             train_edge, valid_edge, test_edge = split_edge["train"], split_edge["valid"], split_edge["test"]
+#             entity_dict = dict()
+#             cur_idx = 0
+#             for key in dataset[0]['num_nodes_dict']:
+#                 entity_dict[key] = (cur_idx, cur_idx + dataset[0]['num_nodes_dict'][key])
+#                 cur_idx += dataset[0]['num_nodes_dict'][key]
+#             nentity = sum(dataset[0]['num_nodes_dict'].values())
 
-            valid_head_neg = valid_edge.pop('head_neg')
-            valid_tail_neg = valid_edge.pop('tail_neg')
-            test_head_neg = test_edge.pop('head_neg')
-            test_tail_neg = test_edge.pop('tail_neg')
+#             valid_head_neg = valid_edge.pop('head_neg')
+#             valid_tail_neg = valid_edge.pop('tail_neg')
+#             test_head_neg = test_edge.pop('head_neg')
+#             test_tail_neg = test_edge.pop('tail_neg')
 
-            train = pd.DataFrame(train_edge)
-            valid = pd.DataFrame(valid_edge)
-            test = pd.DataFrame(test_edge)
+#             train = pd.DataFrame(train_edge)
+#             valid = pd.DataFrame(valid_edge)
+#             test = pd.DataFrame(test_edge)
 
-            # Convert to global index
-            train['head'] = [idx + entity_dict[tp][0] for idx, tp in zip(train['head'], train['head_type'])]
-            train['tail'] = [idx + entity_dict[tp][0] for idx, tp in zip(train['tail'], train['tail_type'])]
+#             # Convert to global index
+#             train['head'] = [idx + entity_dict[tp][0] for idx, tp in zip(train['head'], train['head_type'])]
+#             train['tail'] = [idx + entity_dict[tp][0] for idx, tp in zip(train['tail'], train['tail_type'])]
 
-            valid['head'] = [idx + entity_dict[tp][0] for idx, tp in zip(valid['head'], valid['head_type'])]
-            valid['tail'] = [idx + entity_dict[tp][0] for idx, tp in zip(valid['tail'], valid['tail_type'])]
+#             valid['head'] = [idx + entity_dict[tp][0] for idx, tp in zip(valid['head'], valid['head_type'])]
+#             valid['tail'] = [idx + entity_dict[tp][0] for idx, tp in zip(valid['tail'], valid['tail_type'])]
 
-            test['head'] = [idx + entity_dict[tp][0] for idx, tp in zip(test['head'], test['head_type'])]
-            test['tail'] = [idx + entity_dict[tp][0] for idx, tp in zip(test['tail'], test['tail_type'])]
+#             test['head'] = [idx + entity_dict[tp][0] for idx, tp in zip(test['head'], test['head_type'])]
+#             test['tail'] = [idx + entity_dict[tp][0] for idx, tp in zip(test['tail'], test['tail_type'])]
 
-            valid_pos_edge_index = torch.tensor([valid['head'], valid['tail']])
-            valid_edge_type = torch.tensor(valid.relation)
-            valid_neg_edge_index = torch.stack([valid_pos_edge_index[0], valid_tail_neg[:, 0]])
+#             valid_pos_edge_index = torch.tensor([valid['head'], valid['tail']])
+#             valid_edge_type = torch.tensor(valid.relation)
+#             valid_neg_edge_index = torch.stack([valid_pos_edge_index[0], valid_tail_neg[:, 0]])
 
-            test_pos_edge_index = torch.tensor([test['head'], test['tail']])
-            test_edge_type = torch.tensor(test.relation)
-            test_neg_edge_index = torch.stack([test_pos_edge_index[0], test_tail_neg[:, 0]])
+#             test_pos_edge_index = torch.tensor([test['head'], test['tail']])
+#             test_edge_type = torch.tensor(test.relation)
+#             test_neg_edge_index = torch.stack([test_pos_edge_index[0], test_tail_neg[:, 0]])
 
-            train_directed = train[train.head_type != train.tail_type]
-            train_undirected = train[train.head_type == train.tail_type]
-            train_undirected_uni = train_undirected[train_undirected['head'] < train_undirected['tail']]
-            train_uni = pd.concat([train_directed, train_undirected_uni], ignore_index=True)
+#             train_directed = train[train.head_type != train.tail_type]
+#             train_undirected = train[train.head_type == train.tail_type]
+#             train_undirected_uni = train_undirected[train_undirected['head'] < train_undirected['tail']]
+#             train_uni = pd.concat([train_directed, train_undirected_uni], ignore_index=True)
 
-            train_pos_edge_index = torch.tensor([train_uni['head'], train_uni['tail']])
-            train_edge_type = torch.tensor(train_uni.relation)
+#             train_pos_edge_index = torch.tensor([train_uni['head'], train_uni['tail']])
+#             train_edge_type = torch.tensor(train_uni.relation)
 
-            r, c = train_pos_edge_index
-            rev_edge_index = torch.stack([c, r])
-            rev_edge_type = train_edge_type + 51
+#             r, c = train_pos_edge_index
+#             rev_edge_index = torch.stack([c, r])
+#             rev_edge_type = train_edge_type + 51
 
-            edge_index = torch.cat([train_pos_edge_index, rev_edge_index], dim=1)
-            edge_type = torch.cat([train_edge_type, rev_edge_type], dim=0)
+#             edge_index = torch.cat([train_pos_edge_index, rev_edge_index], dim=1)
+#             edge_type = torch.cat([train_edge_type, rev_edge_type], dim=0)
 
-            data = Data(
-                x=torch.arange(nentity), edge_index=edge_index, edge_type=edge_type,
-                train_pos_edge_index=train_pos_edge_index, train_edge_type=train_edge_type, 
-                val_pos_edge_index=valid_pos_edge_index, val_edge_type=valid_edge_type, val_neg_edge_index=valid_neg_edge_index,
-                test_pos_edge_index=test_pos_edge_index, test_edge_type=test_edge_type, test_neg_edge_index=test_neg_edge_index)
+#             data = Data(
+#                 x=torch.arange(nentity), edge_index=edge_index, edge_type=edge_type,
+#                 train_pos_edge_index=train_pos_edge_index, train_edge_type=train_edge_type, 
+#                 val_pos_edge_index=valid_pos_edge_index, val_edge_type=valid_edge_type, val_neg_edge_index=valid_neg_edge_index,
+#                 test_pos_edge_index=test_pos_edge_index, test_edge_type=test_edge_type, test_neg_edge_index=test_neg_edge_index)
 
-        else:
-            raise NotImplementedError
+#         else:
+#             raise NotImplementedError
             
-        print('Processing:', d)
-        print(dataset)
+#         print('Processing:', d)
+#         print(dataset)
         
-        for s in seeds:
-            seed_everything(s)
+#         for s in seeds:
+#             seed_everything(s)
 
-            # D
-            # data = train_test_split_edges_no_neg_adj_mask(data, test_ratio=0.05, two_hop_degree=two_hop_degree, kg=True)
-            print(s, data)
+#             # D
+#             # data = train_test_split_edges_no_neg_adj_mask(data, test_ratio=0.05, two_hop_degree=two_hop_degree, kg=True)
+#             print(s, data)
 
-            with open(os.path.join(data_dir, d, f'd_{s}.pkl'), 'wb') as f:
-                pickle.dump((dataset, data), f)
+#             with open(os.path.join(data_dir, d, f'd_{s}.pkl'), 'wb') as f:
+#                 pickle.dump((dataset, data), f)
 
-            # Two ways to sample Df from the training set
-            ## 1. Df is within 2 hop local enclosing subgraph of Dtest
-            ## 2. Df is outside of 2 hop local enclosing subgraph of Dtest
+#             # Two ways to sample Df from the training set
+#             ## 1. Df is within 2 hop local enclosing subgraph of Dtest
+#             ## 2. Df is outside of 2 hop local enclosing subgraph of Dtest
             
-            # All the candidate edges (train edges)
-            # graph = to_networkx(Data(edge_index=data.train_pos_edge_index, x=data.x))
+#             # All the candidate edges (train edges)
+#             # graph = to_networkx(Data(edge_index=data.train_pos_edge_index, x=data.x))
 
-            # Get the 2 hop local enclosing subgraph for all test edges
-            _, local_edges, _, mask = k_hop_subgraph(
-                data.test_pos_edge_index.flatten().unique(), 
-                2, 
-                data.train_pos_edge_index, 
-                num_nodes=dataset[0].num_nodes)
-            distant_edges = data.train_pos_edge_index[:, ~mask]
-            print('Number of edges. Local: ', local_edges.shape[1], 'Distant:', distant_edges.shape[1])
+#             # Get the 2 hop local enclosing subgraph for all test edges
+#             _, local_edges, _, mask = k_hop_subgraph(
+#                 data.test_pos_edge_index.flatten().unique(), 
+#                 2, 
+#                 data.train_pos_edge_index, 
+#                 num_nodes=dataset[0].num_nodes)
+#             distant_edges = data.train_pos_edge_index[:, ~mask]
+#             print('Number of edges. Local: ', local_edges.shape[1], 'Distant:', distant_edges.shape[1])
 
-            in_mask = mask
-            out_mask = ~mask
+#             in_mask = mask
+#             out_mask = ~mask
 
-            torch.save(
-                {'out': out_mask, 'in': in_mask},
-                os.path.join(data_dir, d, f'df_{s}.pt')
-            )
+#             torch.save(
+#                 {'out': out_mask, 'in': in_mask},
+#                 os.path.join(data_dir, d, f'df_{s}.pt')
+#             )
 
 
 def main():
