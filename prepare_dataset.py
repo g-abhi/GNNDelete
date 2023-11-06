@@ -147,7 +147,7 @@ def process_graph():
         elif 'ogbl' in d:
             dataset = PygLinkPropPredDataset(root=os.path.join(data_dir, d), name=d)
         elif 'FacebookArtists' in d:
-            df = pd.read_csv('./facebook_clean_data/artist.edges').to_numpy()
+            df = pd.read_csv('./facebook_clean_data/artist_edges.csv').to_numpy()
             df = np.swapaxes(df,0,1)
             dataset = [Data(edge_index=df)]
         else:
