@@ -147,7 +147,7 @@ def process_graph():
             dataset = Flickr(os.path.join(data_dir, d), transform=T.NormalizeFeatures())
         elif 'ogbl' in d:
             dataset = PygLinkPropPredDataset(root=os.path.join(data_dir, d), name=d)
-        elif 'FacebookArtists' in d:
+        elif 'FacebookPages' in d:
             with open('./facebook_large/musae_facebook_features.json') as json_file:
                 data = json.load(json_file)
 
