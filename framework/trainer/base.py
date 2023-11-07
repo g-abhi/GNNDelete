@@ -63,7 +63,7 @@ class Trainer:
         return z
 
     def train(self, model, data, optimizer, args):
-        if self.args.dataset in ['Cora', 'PubMed', 'DBLP', 'CS']:
+        if self.args.dataset in ['Cora', 'PubMed', 'DBLP', 'CS', 'FacebookPagePage']:
             return self.train_fullbatch(model, data, optimizer, args)
 
         if self.args.dataset in ['Physics']:
