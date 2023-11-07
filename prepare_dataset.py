@@ -9,16 +9,15 @@ from tqdm import tqdm
 from torch_geometric.seed import seed_everything
 import torch_geometric.transforms as T
 from torch_geometric.data import Data
-from torch_geometric.datasets import CitationFull, Coauthor, Flickr, RelLinkPredDataset, WordNet18, WordNet18RR
+from torch_geometric.datasets import CitationFull, Coauthor, Flickr, RelLinkPredDataset, WordNet18, WordNet18RR, FacebookPagePage
 from torch_geometric.utils import train_test_split_edges, k_hop_subgraph, negative_sampling, to_undirected, is_undirected, to_networkx
 from ogb.linkproppred import PygLinkPropPredDataset
 from framework.utils import *
 
-
 data_dir = './data'
 df_size = [i / 100 for i in range(10)] + [i / 10 for i in range(10)] + [i for i in range(10)]       # Df_size in percentage
 seeds = [42, 21, 13, 87, 100]
-graph_datasets = ['FacebookPages','Cora', 'PubMed', 'DBLP', 'CS', 'ogbl-citation2', 'ogbl-collab'][:2]
+graph_datasets = ['FacebookPagePage','Cora', 'PubMed', 'DBLP', 'CS', 'ogbl-citation2', 'ogbl-collab'][:2]
 kg_datasets = ['FB15k-237', 'WordNet18', 'WordNet18RR', 'ogbl-biokg'][-1:]
 os.makedirs(data_dir, exist_ok=True)
 
@@ -147,19 +146,8 @@ def process_graph():
             dataset = Flickr(os.path.join(data_dir, d), transform=T.NormalizeFeatures())
         elif 'ogbl' in d:
             dataset = PygLinkPropPredDataset(root=os.path.join(data_dir, d), name=d)
-        elif 'FacebookPages' in d:
-            with open('./facebook_large/musae_facebook_features.json') as json_file:
-                data = json.load(json_file)
-
-            mat = torch.zeros((22470,4714))
-            for page_id, feature in data.items():
-                
-                mat[int(page_id), feature] = 1
-
-            x = mat
-            edge_index = pd.read_csv('./facebook_large/musae_facebook_target.csv', encoding='utf-8').to_numpy().T
-            y = pd.read_csv('./facebook_large/musae_facebook_target.csv', encoding='utf-8').to_numpy()
-            dataset = [Data(x=x, edge_index=edge_index)]
+        elif 'FacebookPagePage' in d:
+            dataset = FacebookPagePage(os.path.join(data_dir, d), transform=T.NormalizeFeatures())
         else:
             raise NotImplementedError
 
