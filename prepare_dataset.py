@@ -9,7 +9,7 @@ from tqdm import tqdm
 from torch_geometric.seed import seed_everything
 import torch_geometric.transforms as T
 from torch_geometric.data import Data
-from torch_geometric.datasets import CitationFull, Coauthor, Flickr, RelLinkPredDataset, WordNet18, WordNet18RR, FacebookPagePage
+from torch_geometric.datasets import CitationFull, Coauthor, Flickr, RelLinkPredDataset, WordNet18, WordNet18RR, FacebookPagePage, Reddit2
 from torch_geometric.utils import train_test_split_edges, k_hop_subgraph, negative_sampling, to_undirected, is_undirected, to_networkx
 from ogb.linkproppred import PygLinkPropPredDataset
 from framework.utils import *
@@ -17,7 +17,8 @@ from framework.utils import *
 data_dir = './data'
 df_size = [i / 100 for i in range(10)] + [i / 10 for i in range(10)] + [i for i in range(10)]       # Df_size in percentage
 seeds = [42, 21, 13, 87, 100]
-graph_datasets = ['FacebookPagePage','Cora', 'PubMed', 'DBLP', 'CS', 'ogbl-citation2', 'ogbl-collab'][:2]
+# graph_datasets = ['FacebookPagePage','Cora', 'Reddit2', 'PubMed', 'DBLP', 'CS', 'ogbl-citation2', 'ogbl-collab'][:3]
+graph_datasets = ['FacebookPagePage','Cora', 'Reddit2']
 kg_datasets = ['FB15k-237', 'WordNet18', 'WordNet18RR', 'ogbl-biokg'][-1:]
 os.makedirs(data_dir, exist_ok=True)
 
@@ -148,6 +149,8 @@ def process_graph():
             dataset = PygLinkPropPredDataset(root=os.path.join(data_dir, d), name=d)
         elif 'FacebookPagePage' in d:
             dataset = FacebookPagePage(os.path.join(data_dir, d), transform=T.NormalizeFeatures())
+        elif 'Reddit2' in d:
+            dataset = Reddit2(os.path.join(data_dir, d), transform=T.NormalizeFeatures())
         else:
             raise NotImplementedError
 
