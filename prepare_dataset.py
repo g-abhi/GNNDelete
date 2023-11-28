@@ -149,8 +149,8 @@ def process_graph():
             dataset = PygLinkPropPredDataset(root=os.path.join(data_dir, d), name=d)
         elif 'FacebookPagePage' in d:
             dataset = FacebookPagePage(os.path.join(data_dir, d), transform=T.NormalizeFeatures())
-        elif 'Reddit2' in d:
-            dataset = Reddit2(os.path.join(data_dir, d), transform=T.NormalizeFeatures())
+        elif 'Twitch' in d:
+            dataset = Twitch(os.path.join(data_dir, d), transform=T.NormalizeFeatures())
         else:
             raise NotImplementedError
 
