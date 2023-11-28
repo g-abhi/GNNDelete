@@ -150,7 +150,7 @@ def process_graph():
         elif 'FacebookPagePage' in d:
             dataset = FacebookPagePage(os.path.join(data_dir, d), transform=T.NormalizeFeatures())
         elif 'Twitch' in d:
-            dataset = Twitch(os.path.join(data_dir, d), transform=T.NormalizeFeatures())
+            dataset = Twitch(os.path.join(data_dir, d), transform=T.NormalizeFeatures(), name="EN")
         else:
             raise NotImplementedError
 
