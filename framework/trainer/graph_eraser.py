@@ -239,7 +239,7 @@ class GraphEraserTrainer(Trainer):
     def train(self, model, data, optimizer, args, logits_ori=None, attack_model_all=None, attack_model_sub=None):
 
         with torch.no_grad():
-            z = model(data.x, data.train_pos_edge_index[:, data.dr_mask])
+            z = model(data.x.to('cuda'), data.train_pos_edge_index.to('cuda')[:, data.dr_mask.to('cuda')])
 
         # Retrain the model
         for c in model.children():
