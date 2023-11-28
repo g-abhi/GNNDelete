@@ -5,7 +5,7 @@ import torch
 from torch_geometric.seed import seed_everything
 from torch_geometric.utils import to_undirected, is_undirected
 import torch_geometric.transforms as T
-from torch_geometric.datasets import CitationFull, Coauthor, Flickr, RelLinkPredDataset, WordNet18, WordNet18RR
+from torch_geometric.datasets import CitationFull, Coauthor, Flickr, RelLinkPredDataset, WordNet18, WordNet18RR, FacebookPagePage, Twitch
 from torch_geometric.seed import seed_everything
 
 from framework import get_model, get_trainer
@@ -26,7 +26,13 @@ def main():
     seed_everything(args.random_seed)
 
     # Dataset
-    dataset = CitationFull(os.path.join(args.data_dir, args.dataset), args.dataset, transform=T.NormalizeFeatures())
+    dataset = None
+    if args.dataset == "FacebookPagePage":
+        dataset = FacebookPagePage(os.path.join(args.data_dir, args.dataset), transform=T.NormalizeFeatures())
+    elif args.dataset == "Cora":
+        dataset = CitationFull(os.path.join(args.data_dir, args.dataset), args.dataset, transform=T.NormalizeFeatures())
+    elif args.dataset == "Twitch":
+        dataset = Twitch(os.path.join(args.data_dir, args.dataset), transform=T.NormalizeFeatures())
     data = dataset[0]
     print('Original data', data)
 
