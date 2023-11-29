@@ -191,6 +191,7 @@ class GNNDeleteTrainer(Trainer):
         ## The final mask is the intersection
         sdf1_all_pair_without_df_mask = sdf1_all_pair_mask & lower_mask
         sdf2_all_pair_without_df_mask = sdf2_all_pair_mask & lower_mask
+        sdf2_all_pair_without_df_mask = sdf2_all_pair_without_df_mask.to("cuda")
 
         # print(data.sdf_node_2hop_mask.sum())
         # print(sdf_all_pair_mask.nonzero())
