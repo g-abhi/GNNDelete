@@ -18,9 +18,6 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def main():
     args = parse_args()
-    args.checkpoint_dir = 'checkpoint_node'
-    args.dataset = 'DBLP'
-    args.unlearning_model = 'original'
     args.checkpoint_dir = os.path.join(args.checkpoint_dir, args.dataset, args.gnn, args.unlearning_model, str(args.random_seed))
     os.makedirs(args.checkpoint_dir, exist_ok=True)
     seed_everything(args.random_seed)
