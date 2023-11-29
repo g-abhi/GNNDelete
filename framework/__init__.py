@@ -1,6 +1,6 @@
 from .models import GCN, GAT, GIN, RGCN, RGAT, GCNDelete, GATDelete, GINDelete, RGCNDelete, RGATDelete
 from .trainer.base import Trainer, KGTrainer, NodeClassificationTrainer
-from .trainer.retrain import RetrainTrainer, KGRetrainTrainer
+from .trainer.retrain import RetrainTrainer, KGRetrainTrainer, RetrainNodeTrainer
 from .trainer.gnndelete import GNNDeleteTrainer
 from .trainer.gnndelete_nodeemb import GNNDeleteNodeembTrainer, KGGNNDeleteNodeembTrainer
 from .trainer.gradient_ascent import GradientAscentTrainer, KGGradientAscentTrainer
@@ -15,6 +15,7 @@ trainer_mapping = {
     'original': Trainer,
     'original_node': NodeClassificationTrainer,
     'retrain': RetrainTrainer,
+    'retrain_node': RetrainNodeTrainer,
     'gnndelete': GNNDeleteTrainer,
     'gradient_ascent': GradientAscentTrainer,
     'descent_to_delete': DtdTrainer,
