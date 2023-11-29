@@ -194,7 +194,10 @@ def process_graph():
                 data = train_test_split_edges_no_neg_adj_mask(data, test_ratio=0.05, two_hop_degree=two_hop_degree)
             else:
                 data = train_test_split_edges_no_neg_adj_mask(data, test_ratio=0.05)
+            split = T.RandomNodeSplit()
+            data = split(data)
             print(s, data)
+            
 
             with open(os.path.join(data_dir, d, f'd_{s}.pkl'), 'wb') as f:
                 pickle.dump((dataset, data), f)
