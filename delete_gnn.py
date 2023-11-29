@@ -217,12 +217,13 @@ def main():
             {'params': [p for n, p in model.named_parameters() if 'del' in n], 'weight_decay': 0.0}
         ]
         print('parameters_to_optimize', [n for n, p in model.named_parameters() if 'del' in n])
-
+        print(len(parameters_to_optimize[0]['params']))
         if 'layerwise' in args.loss_type:
             optimizer1 = torch.optim.Adam(model.deletion1.parameters(), lr=args.lr)
             optimizer2 = torch.optim.Adam(model.deletion2.parameters(), lr=args.lr)
             optimizer = [optimizer1, optimizer2]
         else:
+            print("here")
             optimizer = torch.optim.Adam(parameters_to_optimize, lr=args.lr)
 
     else:
