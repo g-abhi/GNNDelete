@@ -149,14 +149,14 @@ class GNNDeleteTrainer(Trainer):
         # neg_size = 10
 
         # MI Attack before unlearning
-        if attack_model_all is not None:
-            mi_logit_all_before, mi_sucrate_all_before = member_infer_attack(model, attack_model_all, data)
-            self.trainer_log['mi_logit_all_before'] = mi_logit_all_before
-            self.trainer_log['mi_sucrate_all_before'] = mi_sucrate_all_before
-        if attack_model_sub is not None:
-            mi_logit_sub_before, mi_sucrate_sub_before = member_infer_attack(model, attack_model_sub, data)
-            self.trainer_log['mi_logit_sub_before'] = mi_logit_sub_before
-            self.trainer_log['mi_sucrate_sub_before'] = mi_sucrate_sub_before
+        # if attack_model_all is not None:
+        #     mi_logit_all_before, mi_sucrate_all_before = member_infer_attack(model, attack_model_all, data)
+        #     self.trainer_log['mi_logit_all_before'] = mi_logit_all_before
+        #     self.trainer_log['mi_sucrate_all_before'] = mi_sucrate_all_before
+        # if attack_model_sub is not None:
+        #     mi_logit_sub_before, mi_sucrate_sub_before = member_infer_attack(model, attack_model_sub, data)
+        #     self.trainer_log['mi_logit_sub_before'] = mi_logit_sub_before
+        #     self.trainer_log['mi_sucrate_sub_before'] = mi_sucrate_sub_before
 
         # All node paris in S_Df without Df
         ## S_Df 1 hop all pair mask
@@ -213,7 +213,7 @@ class GNNDeleteTrainer(Trainer):
             model.train()
 
             start_time = time.time()
-            z = model(data.x, data.train_pos_edge_index[:, data.sdf_mask])
+            z = model(data.x, data.train_pos_edge_index[:, data.sdf_mask], mask_1hop=data.sdf_node_1hop_mask, mask_2hop=data.sdf_node_2hop_mask)
             # z1, z2 = model(data.x, data.train_pos_edge_index[:, data.sdf_mask], return_all_emb=True)
             # print('current deletion weight', model.deletion1.deletion_weight.sum(), model.deletion2.deletion_weight.sum())
             # print('aaaaaa', z[data.sdf_node_2hop_mask].sum())
