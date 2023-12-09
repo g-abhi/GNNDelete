@@ -134,7 +134,154 @@ class GNNDeleteTrainer(Trainer):
             loss = alpha * loss_r + (1 - alpha) * loss_l
 
         return loss, loss_r, loss_l
+    @torch.no_grad()
+    def eval(self, model, data, stage='val', pred_all=False):
+        model.eval()
+        pos_edge_index = data[f'{stage}_pos_edge_index']
+        neg_edge_index = data[f'{stage}_neg_edge_index']
 
+        if self.args.eval_on_cpu:
+            model = model.to('cpu')
+        
+        if hasattr(data, 'dtrain_mask'):
+            mask = data.dtrain_mask
+        else:
+            mask = data.dr_mask
+        
+        z = model(data.x, data.train_pos_edge_index[:, mask], mask_1hop=data.sdf_node_1hop_mask, mask_2hop=data.sdf_node_2hop_mask)
+        logits = model.decode(z, pos_edge_index, neg_edge_index)
+        label = self.get_link_labels(pos_edge_index, neg_edge_index)
+
+        # DT AUC AUP
+        loss = F.binary_cross_entropy_with_logits(logits, label).cpu().item()
+        dt_auc = roc_auc_score(label.cpu(), logits.cpu())
+        dt_aup = average_precision_score(label.cpu(), logits.cpu())
+
+        # DF AUC AUP
+        if self.args.unlearning_model in ['original']:
+            df_logit = []
+        else:
+            # df_logit = model.decode(z, data.train_pos_edge_index[:, data.df_mask]).sigmoid().tolist()
+            df_logit = model.decode(z, data.directed_df_edge_index).sigmoid().tolist()
+
+        if len(df_logit) > 0:
+            df_auc = []
+            df_aup = []
+        
+            # Sample pos samples
+            if len(self.df_pos_edge) == 0:
+                for i in range(500):
+                    mask = torch.zeros(data.train_pos_edge_index[:, data.dr_mask].shape[1], dtype=torch.bool)
+                    idx = torch.randperm(data.train_pos_edge_index[:, data.dr_mask].shape[1])[:len(df_logit)]
+                    mask[idx] = True
+                    self.df_pos_edge.append(mask)
+            
+            # Use cached pos samples
+            for mask in self.df_pos_edge:
+                pos_logit = model.decode(z, data.train_pos_edge_index[:, data.dr_mask][:, mask]).sigmoid().tolist()
+                
+                logit = df_logit + pos_logit
+                label = [0] * len(df_logit) +  [1] * len(df_logit)
+                df_auc.append(roc_auc_score(label, logit))
+                df_aup.append(average_precision_score(label, logit))
+        
+            df_auc = np.mean(df_auc)
+            df_aup = np.mean(df_aup)
+
+        else:
+            df_auc = np.nan
+            df_aup = np.nan
+
+        # Logits for all node pairs
+        if pred_all:
+            logit_all_pair = (z @ z.t()).cpu()
+        else:
+            logit_all_pair = None
+
+        log = {
+            f'{stage}_loss': loss,
+            f'{stage}_dt_auc': dt_auc,
+            f'{stage}_dt_aup': dt_aup,
+            f'{stage}_df_auc': df_auc,
+            f'{stage}_df_aup': df_aup,
+            f'{stage}_df_logit_mean': np.mean(df_logit) if len(df_logit) > 0 else np.nan,
+            f'{stage}_df_logit_std': np.std(df_logit) if len(df_logit) > 0 else np.nan
+        }
+
+        if self.args.eval_on_cpu:
+            model = model.to(device)
+
+        return loss, dt_auc, dt_aup, df_auc, df_aup, df_logit, logit_all_pair, log
+
+    @torch.no_grad()
+    def test(self, model, data, model_retrain=None, attack_model_all=None, attack_model_sub=None, ckpt='best'):
+        
+        if ckpt == 'best':    # Load best ckpt
+            ckpt = torch.load(os.path.join(self.args.checkpoint_dir, 'model_final.pt'))
+            model.load_state_dict(ckpt['model_state'])
+
+        if 'ogbl' in self.args.dataset:
+            pred_all = False
+        else:
+            pred_all = True
+        loss, dt_auc, dt_aup, df_auc, df_aup, df_logit, logit_all_pair, test_log = self.eval(model, data, 'test', pred_all)
+
+        self.trainer_log['dt_loss'] = loss
+        self.trainer_log['dt_auc'] = dt_auc
+        self.trainer_log['dt_aup'] = dt_aup
+        self.trainer_log['df_logit'] = df_logit
+        self.logit_all_pair = logit_all_pair
+        self.trainer_log['df_auc'] = df_auc
+        self.trainer_log['df_aup'] = df_aup
+        self.trainer_log['auc_sum'] = dt_auc + df_auc
+        self.trainer_log['aup_sum'] = dt_aup + df_aup
+        self.trainer_log['auc_gap'] = abs(dt_auc - df_auc)
+        self.trainer_log['aup_gap'] = abs(dt_aup - df_aup)
+
+        # # AUC AUP on Df
+        # if len(df_logit) > 0:
+        #     auc = []
+        #     aup = []
+
+        #     if self.args.eval_on_cpu:
+        #         model = model.to('cpu')
+            
+        #     z = model(data.x, data.train_pos_edge_index[:, data.dtrain_mask])
+        #     for i in range(500):
+        #         mask = torch.zeros(data.train_pos_edge_index[:, data.dr_mask].shape[1], dtype=torch.bool)
+        #         idx = torch.randperm(data.train_pos_edge_index[:, data.dr_mask].shape[1])[:len(df_logit)]
+        #         mask[idx] = True
+        #         pos_logit = model.decode(z, data.train_pos_edge_index[:, data.dr_mask][:, mask]).sigmoid().tolist()
+
+        #         logit = df_logit + pos_logit
+        #         label = [0] * len(df_logit) +  [1] * len(df_logit)
+        #         auc.append(roc_auc_score(label, logit))
+        #         aup.append(average_precision_score(label, logit))
+
+        #     self.trainer_log['df_auc'] = np.mean(auc)
+        #     self.trainer_log['df_aup'] = np.mean(aup)
+
+
+        if model_retrain is not None:    # Deletion
+            self.trainer_log['ve'] = verification_error(model, model_retrain).cpu().item()
+            # self.trainer_log['dr_kld'] = output_kldiv(model, model_retrain, data=data).cpu().item()
+
+        # MI Attack after unlearning
+        if attack_model_all is not None:
+            mi_logit_all_after, mi_sucrate_all_after = member_infer_attack(model, attack_model_all, data)
+            self.trainer_log['mi_logit_all_after'] = mi_logit_all_after
+            self.trainer_log['mi_sucrate_all_after'] = mi_sucrate_all_after
+        if attack_model_sub is not None:
+            mi_logit_sub_after, mi_sucrate_sub_after = member_infer_attack(model, attack_model_sub, data)
+            self.trainer_log['mi_logit_sub_after'] = mi_logit_sub_after
+            self.trainer_log['mi_sucrate_sub_after'] = mi_sucrate_sub_after
+            
+            self.trainer_log['mi_ratio_all'] = np.mean([i[1] / j[1] for i, j in zip(self.trainer_log['mi_logit_all_after'], self.trainer_log['mi_logit_all_before'])])
+            self.trainer_log['mi_ratio_sub'] = np.mean([i[1] / j[1] for i, j in zip(self.trainer_log['mi_logit_sub_after'], self.trainer_log['mi_logit_sub_before'])])
+            print(self.trainer_log['mi_ratio_all'], self.trainer_log['mi_ratio_sub'], self.trainer_log['mi_sucrate_all_after'], self.trainer_log['mi_sucrate_sub_after'])
+            print(self.trainer_log['df_auc'], self.trainer_log['df_aup'])
+
+        return loss, dt_auc, dt_aup, df_auc, df_aup, df_logit, logit_all_pair, test_log
     def train_fullbatch(self, model, data, optimizer, args, logits_ori=None, attack_model_all=None, attack_model_sub=None):
         model = model.to('cuda')
         data = data.to('cuda')
