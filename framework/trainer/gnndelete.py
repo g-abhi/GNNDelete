@@ -378,7 +378,7 @@ class GNNDeleteTrainer(Trainer):
                 num_nodes=data.num_nodes,
                 num_neg_samples=neg_size)
 
-            df_logits = model.decode(z, data.train_pos_edge_index[:, data.df_mask], neg_edge_index)
+            df_logits = model.decode(z, data.train_pos_edge_index[:, data.df_mask], neg_edge_index).sigmoid()
             loss_r = loss_fct(df_logits[:neg_size], df_logits[neg_size:])
             # df_logits = model.decode(
             #     z, 
