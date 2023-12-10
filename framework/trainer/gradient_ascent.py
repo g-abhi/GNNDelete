@@ -118,7 +118,7 @@ class GradientAscentTrainer(Trainer):
             'model_state': {k: v.cpu() for k, v in model.state_dict().items()},
             'optimizer_state': optimizer.state_dict(),
         }
-        torch.save(ckpt, os.path.join(args.checkpoint_dir, 'model_best.pt'))
+        torch.save(ckpt, os.path.join(args.checkpoint_dir, 'model_final.pt'))
 
     def train_minibatch(self, model, data, optimizer, args, logits_ori=None, attack_model_all=None, attack_model_sub=None):
         best_metric = 0
