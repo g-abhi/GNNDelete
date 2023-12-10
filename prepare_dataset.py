@@ -18,7 +18,7 @@ data_dir = './data'
 df_size = [i / 100 for i in range(10)] + [i / 10 for i in range(10)] + [i for i in range(10)]       # Df_size in percentage
 seeds = [42, 21, 13, 87, 100]
 # graph_datasets = ['FacebookPagePage','Cora', 'Reddit2', 'PubMed', 'DBLP', 'CS', 'ogbl-citation2', 'ogbl-collab'][:3]
-graph_datasets = ['FacebookPagePage','Cora', 'Twitch']
+graph_datasets = ['FacebookSmall','FacebookPagePage','Cora', 'Twitch']
 kg_datasets = ['FB15k-237', 'WordNet18', 'WordNet18RR', 'ogbl-biokg'][-1:]
 os.makedirs(data_dir, exist_ok=True)
 
@@ -139,7 +139,7 @@ def train_test_split_edges_no_neg_adj_mask(data, val_ratio: float = 0.05, test_r
 def process_graph():
     for d in graph_datasets:
 
-        if d in ['Cora', 'PubMed', 'DBLP']:
+        if d in ['Cora', 'PubMed', 'DBLP', 'CoraSmall']:
             dataset = CitationFull(os.path.join(data_dir, d), d, transform=T.NormalizeFeatures())
         elif d in ['CS', 'Physics']:
             dataset = Coauthor(os.path.join(data_dir, d), d, transform=T.NormalizeFeatures())
@@ -151,14 +151,45 @@ def process_graph():
             dataset = FacebookPagePage(os.path.join(data_dir, d), transform=T.NormalizeFeatures())
         elif 'Twitch' in d:
             dataset = Twitch(os.path.join(data_dir, d), transform=T.NormalizeFeatures(), name="EN")
+        elif d in 'FacebookSmall':
+            dataset = FacebookPagePage(os.path.join(data_dir, d), transform=T.NormalizeFeatures())
         else:
             raise NotImplementedError
 
         print('Processing:', d)
         print(dataset)
+        
         data = dataset[0]
-        data.train_mask = data.val_mask = data.test_mask = None
-        graph = to_networkx(data)
+        if "FacebookSmall" in d:
+          edge_list_file = "FacebookPagePage_condensed_smaller.txt"
+          with open(edge_list_file, 'r') as f:
+            edges = [[int(x) for x in line.strip().split()] for line in f]
+            
+       
+        
+          res = []
+          [res.append(x) for x in edges if x not in res]
+          edges = res
+          edges = torch.from_numpy(np.array(list(edges)))
+          
+
+          #edge_mask = [True if edge in edges else False for edge in data.edge_index.T] 
+          data = Data(x=data.x, edge_index=edges.t().contiguous(), y=data.y)
+        if "CoraSmall" in d:
+          edge_list_file = "cora_smaller.txt"
+          with open(edge_list_file, 'r') as f:
+            edges = [[int(x) for x in line.strip().split()] for line in f]
+            
+       
+        
+          res = []
+          [res.append(x) for x in edges if x not in res]
+          edges = res
+          edges = torch.from_numpy(np.array(list(edges)))
+          
+          #edge_mask = [True if edge in edges else False for edge in data.edge_index.T] 
+          data = Data(x=data.x, edge_index=edges.t().contiguous(), y=data.y)
+
 
         # Get two hop degree for all nodes
         node_to_neighbors = {}
@@ -190,6 +221,8 @@ def process_graph():
 
             # D
             data = dataset[0]
+            if 'FacebookSmall' == d or 'CoraSmall' == d:
+              data = Data(data.x, edges.t().contiguous(), y=data.y)
             if 'ogbl' in d:
                 data = train_test_split_edges_no_neg_adj_mask(data, test_ratio=0.05, two_hop_degree=two_hop_degree)
             else:
