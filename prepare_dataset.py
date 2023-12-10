@@ -190,7 +190,8 @@ def process_graph():
           #edge_mask = [True if edge in edges else False for edge in data.edge_index.T] 
           data = Data(x=data.x, edge_index=edges.t().contiguous(), y=data.y)
 
-
+        data.train_mask = data.val_mask = data.test_mask = None
+        graph = to_networkx(data)
         # Get two hop degree for all nodes
         node_to_neighbors = {}
         for n in tqdm(graph.nodes(), desc='Two hop neighbors'):
