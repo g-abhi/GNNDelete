@@ -160,7 +160,7 @@ class GNNDeleteTrainer(Trainer):
 
         # DT AUC AUP
         loss = F.binary_cross_entropy_with_logits(logits, label).cpu().item()
-        dt_auc = roc_auc_score(label.cpu(), logits.cpu())
+        dt_auc = roc_auc_score(label.cpu(), logits.sigmoig.cpu())
         dt_aup = average_precision_score(label.cpu(), logits.cpu())
 
         # DF AUC AUP
@@ -291,6 +291,11 @@ class GNNDeleteTrainer(Trainer):
     def train_fullbatch(self, model, data, optimizer, args, logits_ori=None, attack_model_all=None, attack_model_sub=None):
         model = model.to('cuda')
         data = data.to('cuda')
+        for name, param in model.named_parameters():
+              if "deletion" in name:
+                param.requires_grad = True
+              else:
+                param.requires_grad = False
 
         best_metric = 0
 
