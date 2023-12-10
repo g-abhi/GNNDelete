@@ -160,7 +160,7 @@ class GNNDeleteTrainer(Trainer):
 
         # DT AUC AUP
         loss = F.binary_cross_entropy_with_logits(logits, label).cpu().item()
-        dt_auc = roc_auc_score(label.cpu(), logits.sigmoig.cpu())
+        dt_auc = roc_auc_score(label.cpu(), logits.sigmoid().cpu())
         dt_aup = average_precision_score(label.cpu(), logits.cpu())
 
         # DF AUC AUP
