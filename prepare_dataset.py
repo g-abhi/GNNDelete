@@ -18,7 +18,7 @@ data_dir = './data'
 df_size = [i / 100 for i in range(10)] + [i / 10 for i in range(10)] + [i for i in range(10)]       # Df_size in percentage
 seeds = [42, 21, 13, 87, 100]
 # graph_datasets = ['FacebookPagePage','Cora', 'Reddit2', 'PubMed', 'DBLP', 'CS', 'ogbl-citation2', 'ogbl-collab'][:3]
-graph_datasets = ['FacebookSmall','FacebookPagePage','Cora', 'Twitch']
+graph_datasets = ['FacebookSmall','FacebookPagePage','Cora', 'Twitch', 'CoraSmall']
 kg_datasets = ['FB15k-237', 'WordNet18', 'WordNet18RR', 'ogbl-biokg'][-1:]
 os.makedirs(data_dir, exist_ok=True)
 
