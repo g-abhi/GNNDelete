@@ -140,7 +140,7 @@ def process_graph():
     for d in graph_datasets:
 
         if d in ['Cora', 'PubMed', 'DBLP', 'CoraSmall']:
-            dataset = CitationFull(os.path.join(data_dir, "Cora"), d, transform=T.NormalizeFeatures())
+            dataset = CitationFull(os.path.join(data_dir, d), "Cora", transform=T.NormalizeFeatures())
         elif d in ['CS', 'Physics']:
             dataset = Coauthor(os.path.join(data_dir, d), d, transform=T.NormalizeFeatures())
         elif d in ['Flickr']:
